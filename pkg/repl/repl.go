@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/AhmedThresh/not-even-a-compiler/pkg/lexer"
-	"github.com/AhmedThresh/not-even-a-compiler/pkg/token"
+	"github.com/AhmedThresh/not-even-a-compiler/pkg/parser"
 )
 
 const Prompt = ">>"
@@ -23,8 +23,23 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		lexer := lexer.NewLexer(line)
-		for t := lexer.NextToken(); t.Type != token.EOF; t = lexer.NextToken() {
-			fmt.Printf("%+v\n", t)
+
+		parser := parser.NewParser(lexer)
+		program := parser.ParseProgram()
+
+		if len(parser.Errors()) != 0 {
+			printParserErrors(out, parser.Errors())
+			continue
 		}
+		io.WriteString(out, program.String())
+		io.WriteString(out, "\n")
+	}
+}
+
+func printParserErrors(out io.Writer, errors []string) {
+	io.WriteString(out, "Woops! We ran into some monkey business here!\n")
+	io.WriteString(out, " parser errors:\n")
+	for _, msg := range errors {
+		io.WriteString(out, "\t"+msg+"\n")
 	}
 }

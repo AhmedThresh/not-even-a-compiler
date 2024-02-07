@@ -443,3 +443,7 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 func (p *Parser) parseIdentifierExpression() ast.Expression {
 	return &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Literal}
 }
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
