@@ -62,6 +62,9 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
+	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefix(token.IF, p.parseIfExpression)
+	p.registerPrefix(token.FUNCTION, p.parseFunctionExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -283,6 +286,113 @@ func (p *Parser) parseBoolean() ast.Expression {
 	}
 
 	return b
+}
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+
+	exp := p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RPAREN) {
+		// TODO: Should handle error here
+		return nil
+	}
+
+	return exp
+}
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	exp := ast.IfExpression{
+		Token: p.currentToken,
+	}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken()
+	exp.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	exp.Consequence = p.parseBlockStatement()
+
+	if p.peekToken.Type == token.ELSE {
+		// skip the else token
+		p.nextToken()
+
+		if !p.expectPeek(token.LBRACE) {
+			return nil
+		}
+
+		exp.Alternative = p.parseBlockStatement()
+	}
+
+	return &exp
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	blocks := &ast.BlockStatement{
+		Token: p.currentToken,
+	}
+
+	p.nextToken()
+
+	for p.currentToken.Type != token.EOF && p.currentToken.Type != token.RBRACE {
+		s := p.parseStatement()
+		if s != nil {
+			blocks.Statements = append(blocks.Statements, s)
+		}
+		p.nextToken()
+	}
+	return blocks
+}
+
+func (p *Parser) parseFunctionExpression() ast.Expression {
+	expression := &ast.FunctionLiteral{
+		Token: p.currentToken,
+	}
+
+	if !p.expectPeek(token.LPAREN) {
+		// TODO: handle error here
+		return nil
+	}
+
+	p.nextToken()
+
+	expression.Parameters = p.parseFunctionParameters()
+
+	if !p.expectPeek(token.LBRACE) {
+		// TODO: handle error here
+		return nil
+	}
+
+	expression.Body = p.parseBlockStatement()
+
+	return expression
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	res := []*ast.Identifier{}
+
+	for p.currentToken.Type != token.RPAREN {
+		if p.currentToken.Type != token.COMMA {
+			res = append(res, &ast.Identifier{
+				Token: p.currentToken,
+				Value: p.currentToken.Literal,
+			})
+		}
+
+		p.nextToken()
+	}
+
+	return res
 }
 
 func (p *Parser) parseIdentifierExpression() ast.Expression {

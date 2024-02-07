@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/AhmedThresh/not-even-a-compiler/pkg/token"
 )
@@ -151,6 +152,80 @@ func (b *Boolean) TokenLiteral() string {
 }
 func (b *Boolean) String() string {
 	return b.Token.Literal
+}
+
+type IfExpression struct {
+	Token       token.Token // The IF Token
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+func (i *IfExpression) expressionNode() {}
+func (i *IfExpression) TokenLiteral() string {
+	return i.Token.Literal
+}
+func (i *IfExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("if ")
+	out.WriteString(i.Condition.String())
+	out.WriteString("{")
+	if i.Consequence != nil {
+		out.WriteString(i.Consequence.String())
+	}
+	out.WriteString("}")
+
+	if i.Alternative != nil {
+		out.WriteString("else {")
+		out.WriteString(i.Alternative.String())
+		out.WriteString("}")
+	}
+
+	return out.String()
+}
+
+type BlockStatement struct {
+	Token      token.Token
+	Statements []Statement
+}
+
+func (b *BlockStatement) expressionNode() {}
+func (b *BlockStatement) TokenLiteral() string {
+	return b.Token.Literal
+}
+func (b *BlockStatement) String() string {
+	var out bytes.Buffer
+	for _, s := range b.Statements {
+		out.WriteString(s.String())
+	}
+
+	return out.String()
+}
+
+type FunctionLiteral struct {
+	Token      token.Token // The fn token
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (f *FunctionLiteral) expressionNode() {}
+func (f *FunctionLiteral) TokenLiteral() string {
+	return f.Token.Literal
+}
+func (f *FunctionLiteral) String() string {
+	var out bytes.Buffer
+	params := []string{}
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+
+	out.WriteString("fn(")
+	out.WriteString(strings.Join(params, ","))
+	out.WriteString("{")
+	out.WriteString(f.Body.String())
+	out.WriteString("}")
+
+	return out.String()
 }
 
 type Identifier struct {
