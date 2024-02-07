@@ -185,13 +185,13 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 		Token: p.currentToken,
 	}
 
-	val, err := strconv.ParseInt(p.currentToken.Literal, 0, 10)
+	val, err := strconv.Atoi(p.currentToken.Literal)
 	if err != nil {
 		p.errors = append(p.errors, fmt.Sprintf("cannot parse integer %s", p.currentToken.Literal))
 		return nil
 	}
 
-	integerLiteral.Value = val
+	integerLiteral.Value = int64(val)
 	return &integerLiteral
 }
 
@@ -222,6 +222,13 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
+	letStatement := &ast.LetStatement{
+		Token: token.Token{
+			Type:    token.LET,
+			Literal: "let",
+		},
+	}
+
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
@@ -231,17 +238,17 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	for p.currentToken.Type != token.SEMICOLON {
+	letStatement.Name = identifier
+
+	p.nextToken()
+
+	letStatement.Value = p.parseExpression(LOWEST)
+
+	if p.peekToken.Type == token.SEMICOLON {
 		p.nextToken()
 	}
 
-	return &ast.LetStatement{
-		Token: token.Token{
-			Type:    token.LET,
-			Literal: "let",
-		},
-		Name: identifier,
-	}
+	return letStatement
 }
 
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
@@ -251,7 +258,9 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	p.nextToken()
 
-	for p.currentToken.Type != token.SEMICOLON {
+	statement.Value = p.parseExpression(LOWEST)
+
+	if p.peekToken.Type == token.SEMICOLON {
 		p.nextToken()
 	}
 
