@@ -15,13 +15,13 @@ func TestString(t *testing.T) {
 					Value: "myVar",
 				},
 				Value: &Identifier{
-					Token: token.Token{Type: token.IDENT, Literal: "anotherVar"},
-					Value: "anotherVar",
+					Token: token.Token{Type: token.IDENT, Literal: "anotherVars"},
+					Value: "anotherVars",
 				},
 			},
 		},
 	}
-	if program.String() != "let myVar = anotherVar;" {
+	if program.String() != "let myVar = anotherVars;" {
 		t.Errorf("program.String() wrong. got=%q", program.String())
 	}
 }

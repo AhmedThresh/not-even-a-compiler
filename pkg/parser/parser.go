@@ -151,6 +151,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	statement := ast.ExpressionStatement{Token: p.currentToken}
 
 	statement.Expression = p.parseExpression(LOWEST)
+	// TODO: Here we should consider corner cases
 	if p.peekToken.Type == token.SEMICOLON {
 		p.nextToken()
 	}
