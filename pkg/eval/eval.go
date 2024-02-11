@@ -5,6 +5,12 @@ import (
 	"github.com/AhmedThresh/not-even-a-compiler/pkg/object"
 )
 
+var (
+	TRUE  = &object.Boolean{Value: true}
+	FALSE = &object.Boolean{Value: false}
+	NULL  = &object.Null{}
+)
+
 func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	// Statements
@@ -20,13 +26,15 @@ func Eval(node ast.Node) object.Object {
 			Value: node.Value,
 		}
 
+	case *ast.PrefixExpression:
+		right := Eval(node.Right)
+		return evalPrefixExpression(right, node.Operator)
+
 	case *ast.Boolean:
-		return &object.Boolean{
-			Value: node.Value,
-		}
+		return nativeBoolToBooleanObject(node.Value)
 
 	default:
-		return &object.Null{}
+		return NULL
 	}
 }
 
@@ -38,4 +46,44 @@ func evalStatements(statements []ast.Statement) object.Object {
 	}
 
 	return result
+}
+
+func evalPrefixExpression(right object.Object, operator string) object.Object {
+	switch operator {
+	case "!":
+		return evalBangOperator(right)
+	case "-":
+		return evalMinuxOperator(right)
+	default:
+		return NULL
+	}
+}
+
+func evalBangOperator(right object.Object) object.Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		return FALSE
+	}
+}
+
+func evalMinuxOperator(right object.Object) object.Object {
+	if right.Type() != object.INTEGER {
+		return NULL
+	}
+
+	value := right.(*object.Integer).Value
+	return &object.Integer{Value: -value}
+}
+
+func nativeBoolToBooleanObject(input bool) *object.Boolean {
+	if input {
+		return TRUE
+	}
+	return FALSE
 }
