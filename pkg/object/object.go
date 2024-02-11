@@ -3,9 +3,10 @@ package object
 import "fmt"
 
 const (
-	INTEGER = "INTEGER"
-	BOOLEAN = "BOOLEAN"
-	NULL    = "NULL"
+	INTEGER          = "INTEGER"
+	BOOLEAN          = "BOOLEAN"
+	RETURN_VALUE_OBJ = "RETURN_VAL"
+	NULL             = "NULL"
 )
 
 type ObjectType string
@@ -37,6 +38,18 @@ func (b *Boolean) Inspect() string {
 
 func (b *Boolean) Type() ObjectType {
 	return BOOLEAN
+}
+
+type ReturnValue struct {
+	Value Object
+}
+
+func (r *ReturnValue) Inspect() string {
+	return r.Value.Inspect()
+}
+
+func (r *ReturnValue) Type() ObjectType {
+	return RETURN_VALUE_OBJ
 }
 
 type Null struct{}
