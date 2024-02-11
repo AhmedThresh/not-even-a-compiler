@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/AhmedThresh/not-even-a-compiler/pkg/eval"
 	"github.com/AhmedThresh/not-even-a-compiler/pkg/lexer"
 	"github.com/AhmedThresh/not-even-a-compiler/pkg/parser"
 )
@@ -31,8 +32,12 @@ func Start(in io.Reader, out io.Writer) {
 			printParserErrors(out, parser.Errors())
 			continue
 		}
-		io.WriteString(out, program.String())
-		io.WriteString(out, "\n")
+
+		evaluated := eval.Eval(program)
+		if evaluated != nil {
+			io.WriteString(out, evaluated.Inspect())
+			io.WriteString(out, "\n")
+		}
 	}
 }
 
