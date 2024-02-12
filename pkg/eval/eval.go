@@ -184,6 +184,10 @@ func evalIntegerInfixOperation(right object.Object, left object.Object, operator
 
 func evalIfExpression(condition ast.Expression, consequence *ast.BlockStatement, alternative *ast.BlockStatement) object.Object {
 	conditionValue := Eval(condition)
+	if isError(conditionValue) {
+		return conditionValue
+	}
+
 	if conditionValue == FALSE || conditionValue == NULL {
 		if alternative != nil {
 			return Eval(alternative)
