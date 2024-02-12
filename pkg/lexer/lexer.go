@@ -1,6 +1,8 @@
 package lexer
 
-import "github.com/AhmedThresh/not-even-a-compiler/pkg/token"
+import (
+	"github.com/AhmedThresh/not-even-a-compiler/pkg/token"
+)
 
 type Lexer struct {
 	code            string
@@ -78,6 +80,9 @@ func (l *Lexer) NextToken() token.Token {
 		t = token.NewToken(token.LBRACE, l.currentCh)
 	case '}':
 		t = token.NewToken(token.RBRACE, l.currentCh)
+	case '"':
+		t.Type = token.STRING
+		t.Literal = l.readString()
 	case 0:
 		t.Literal = ""
 		t.Type = token.EOF
@@ -127,6 +132,24 @@ func (l *Lexer) readNumber() string {
 	}
 
 	return l.code[position:l.currentPosition]
+}
+
+func (l *Lexer) readString() string {
+	position := l.currentPosition + 1
+	for {
+		l.readCh()
+		if l.currentCh == '"' || l.currentCh == 0 {
+			break
+		}
+	}
+	return l.code[position:l.currentPosition]
+	// l.readCh()
+	// position := l.currentPosition
+	// for l.currentCh != '"' && l.currentCh != 0 {
+	// 	l.readCh()
+	// }
+
+	// return l.code[position:l.currentPosition]
 }
 
 func isLetter(ch byte) bool {
