@@ -16,6 +16,7 @@ const (
 	RETURN_VALUE_OBJ = "RETURN_VAL"
 	ERROR_OBJ        = "ERROR"
 	NULL             = "NULL"
+	BUILTIN          = "BUILTIN"
 )
 
 type ObjectType string
@@ -111,6 +112,20 @@ func (f *Function) Inspect() string {
 
 func (f *Function) Type() ObjectType {
 	return FUNCTION
+}
+
+type BuiltinFunction func(...Object) Object
+
+type Builtin struct {
+	Fn BuiltinFunction
+}
+
+func (b *Builtin) Inspect() string {
+	return "builtin function"
+}
+
+func (b *Builtin) Type() ObjectType {
+	return BUILTIN
 }
 
 type Null struct{}

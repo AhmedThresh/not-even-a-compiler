@@ -79,27 +79,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.ReturnValue{Value: val}
 
 	case *ast.Identifier:
-		val, ok := env.Get(node.Value)
-		if !ok {
-			return newError("identifier not found: " + node.Value)
-		}
-		return val
+		return evalIdentifier(node, env)
 
 	case *ast.FunctionLiteral:
 		return &object.Function{Body: node.Body, Parameters: node.Parameters, Env: env}
 
 	case *ast.CallExpression:
-		fn := Eval(node.Function, env)
-		if isError(fn) {
-			return fn
-		}
-
-		arguments := evalExpressions(node.Arguments, env)
-		if len(arguments) == 1 && isError(arguments[0]) {
-			return arguments[0]
-		}
-
-		return applyFunction(fn, arguments)
+		return evalCallExpression(node, env)
 
 	default:
 		return NULL
@@ -279,15 +265,48 @@ func evalBlockStatements(block *ast.BlockStatement, env *object.Environment) obj
 	return result
 }
 
-func applyFunction(fn object.Object, args []object.Object) object.Object {
-	function, ok := fn.(*object.Function)
-	if !ok {
-		return newError("not a function: %s", fn.Type())
+func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
+	if val, ok := env.Get(node.Value); ok {
+		return val
 	}
 
-	extendedEnv := extendEnv(function, args)
-	evaluated := Eval(function.Body, extendedEnv)
-	return unwrapRetunValue(evaluated)
+	if fn, ok := builtins[node.Value]; ok {
+		return fn
+	}
+
+	return newError("identifier not found: " + node.Value)
+}
+
+func evalCallExpression(node *ast.CallExpression, env *object.Environment) object.Object {
+	fn := Eval(node.Function, env)
+	if isError(fn) {
+		return fn
+	}
+
+	arguments := evalExpressions(node.Arguments, env)
+	if len(arguments) == 1 && isError(arguments[0]) {
+		return arguments[0]
+	}
+
+	return applyFunction(fn, arguments)
+
+}
+
+func applyFunction(fn object.Object, args []object.Object) object.Object {
+	switch fn := fn.(type) {
+	case *object.Function:
+		extendedEnv := extendEnv(fn, args)
+		evaluated := Eval(fn.Body, extendedEnv)
+		return unwrapRetunValue(evaluated)
+	case *object.Builtin:
+		if res := fn.Fn(args...); res != nil {
+			return res
+		} else {
+			return NULL
+		}
+	default:
+		return newError("not a function: %s", fn.Type())
+	}
 }
 
 func extendEnv(function *object.Function, args []object.Object) *object.Environment {
