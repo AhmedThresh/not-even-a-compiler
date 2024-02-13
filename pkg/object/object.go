@@ -12,6 +12,7 @@ const (
 	INTEGER          = "INTEGER"
 	STRING           = "STRING"
 	BOOLEAN          = "BOOLEAN"
+	ARRAY            = "ARRAY"
 	FUNCTION         = "FUNCTION"
 	RETURN_VALUE_OBJ = "RETURN_VAL"
 	ERROR_OBJ        = "ERROR"
@@ -60,6 +61,28 @@ func (b *Boolean) Inspect() string {
 
 func (b *Boolean) Type() ObjectType {
 	return BOOLEAN
+}
+
+type Array struct {
+	Elements []Object
+}
+
+func (a *Array) Inspect() string {
+	var out bytes.Buffer
+	elements := []string{}
+
+	for _, e := range a.Elements {
+		elements = append(elements, e.Inspect())
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
+	return out.String()
+}
+
+func (a *Array) Type() ObjectType {
+	return ARRAY
 }
 
 type ReturnValue struct {

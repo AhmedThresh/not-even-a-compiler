@@ -266,6 +266,30 @@ func (ce *CallExpression) String() string {
 	return out.String()
 }
 
+type Array struct {
+	Token    token.Token // The [ token
+	Elements []Expression
+}
+
+func (a *Array) expressionNode() {}
+func (a *Array) TokenLiteral() string {
+	return a.Token.Literal
+}
+func (a *Array) String() string {
+	var out bytes.Buffer
+	elements := []string{}
+
+	for _, el := range a.Elements {
+		elements = append(elements, el.String())
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
+
+	return out.String()
+}
+
 type Identifier struct {
 	Token token.Token // The token.IDENT token
 	Value string
@@ -277,6 +301,26 @@ func (i *Identifier) TokenLiteral() string {
 }
 func (i *Identifier) String() string {
 	return i.Value
+}
+
+type IndexExpression struct {
+	Token token.Token // The token.LBRACKET token
+	Left  Expression
+	Index Expression
+}
+
+func (i *IndexExpression) expressionNode() {}
+func (i *IndexExpression) TokenLiteral() string {
+	return i.Token.Literal
+}
+func (i *IndexExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(i.Left.String())
+	out.WriteString("[")
+	out.WriteString(i.Index.String())
+	out.WriteString("])")
+	return out.String()
 }
 
 type Program struct {
