@@ -70,6 +70,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FUNCTION, p.parseFunctionExpression)
 	p.registerPrefix(token.STRING, p.parseStringLiteralExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArray)
+	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -494,6 +495,47 @@ func (p *Parser) parseArray() ast.Expression {
 	}
 
 	return arr
+}
+
+func (p *Parser) parseHashLiteral() ast.Expression {
+	hash := &ast.HashLiteral{
+		Token: p.currentToken,
+		Pairs: make(map[ast.Expression]ast.Expression),
+	}
+
+	p.nextToken()
+
+	if p.currentToken.Type == token.RBRACE {
+		return hash
+	}
+
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		key := p.parseExpression(LOWEST)
+		p.nextToken()
+
+		if p.currentToken.Type != token.COLON {
+			return nil
+		}
+
+		p.nextToken()
+
+		value := p.parseExpression(LOWEST)
+		hash.Pairs[key] = value
+
+		p.nextToken()
+
+		if p.currentToken.Type != token.COMMA && p.currentToken.Type != token.RBRACE {
+			return nil
+		}
+
+		if p.currentToken.Type == token.RBRACE {
+			break
+		}
+
+		p.nextToken()
+	}
+
+	return hash
 }
 
 func (p *Parser) Errors() []string {

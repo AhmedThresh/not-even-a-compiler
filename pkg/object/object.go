@@ -3,6 +3,7 @@ package object
 import (
 	"bytes"
 	"fmt"
+	"hash/fnv"
 	"strings"
 
 	"github.com/AhmedThresh/not-even-a-compiler/pkg/ast"
@@ -13,6 +14,7 @@ const (
 	STRING           = "STRING"
 	BOOLEAN          = "BOOLEAN"
 	ARRAY            = "ARRAY"
+	HASH             = "HASH"
 	FUNCTION         = "FUNCTION"
 	RETURN_VALUE_OBJ = "RETURN_VAL"
 	ERROR_OBJ        = "ERROR"
@@ -27,6 +29,15 @@ type Object interface {
 	Inspect() string
 }
 
+type Hashable interface {
+	HashKey() HashKey
+}
+
+type HashKey struct {
+	Type  ObjectType
+	Value int64
+}
+
 type Integer struct {
 	Value int64
 }
@@ -37,6 +48,10 @@ func (i *Integer) Inspect() string {
 
 func (i *Integer) Type() ObjectType {
 	return INTEGER
+}
+
+func (i *Integer) HashKey() HashKey {
+	return HashKey{Type: INTEGER, Value: i.Value}
 }
 
 type String struct {
@@ -51,6 +66,12 @@ func (s *String) Type() ObjectType {
 	return STRING
 }
 
+func (s *String) HashKey() HashKey {
+	h := fnv.New64a()
+	h.Write([]byte(s.Value))
+	return HashKey{Type: STRING, Value: int64(h.Sum64())}
+}
+
 type Boolean struct {
 	Value bool
 }
@@ -61,6 +82,16 @@ func (b *Boolean) Inspect() string {
 
 func (b *Boolean) Type() ObjectType {
 	return BOOLEAN
+}
+
+func (b *Boolean) HashKey() HashKey {
+	var hash int64
+	if b.Value == true {
+		hash = 1
+	} else {
+		hash = 0
+	}
+	return HashKey{Type: STRING, Value: hash}
 }
 
 type Array struct {
@@ -83,6 +114,28 @@ func (a *Array) Inspect() string {
 
 func (a *Array) Type() ObjectType {
 	return ARRAY
+}
+
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h *Hash) Type() ObjectType { return HASH }
+func (h *Hash) Inspect() string {
+	var out bytes.Buffer
+	pairs := []string{}
+	for _, pair := range h.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s: %s", pair.Key.Inspect(), pair.Value.Inspect()))
+	}
+	out.WriteString("{")
+	out.WriteString(strings.Join(pairs, ", "))
+	out.WriteString("}")
+	return out.String()
 }
 
 type ReturnValue struct {

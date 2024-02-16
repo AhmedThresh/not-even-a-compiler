@@ -1,6 +1,10 @@
 package eval
 
-import "github.com/AhmedThresh/not-even-a-compiler/pkg/object"
+import (
+	"fmt"
+
+	"github.com/AhmedThresh/not-even-a-compiler/pkg/object"
+)
 
 var builtins = map[string]*object.Builtin{
 	"len": {
@@ -87,6 +91,15 @@ var builtins = map[string]*object.Builtin{
 			arr := args[0].(*object.Array)
 			arr.Elements = append(arr.Elements, args[1])
 			return arr
+		},
+	},
+
+	"puts": {
+		Fn: func(args ...object.Object) object.Object {
+			for _, arg := range args {
+				fmt.Println(arg.Inspect())
+			}
+			return NULL
 		},
 	},
 }
