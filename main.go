@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	fmt.Println("this is just a test case")
+	fmt.Println("this is just another random a test case")
 	root.Run()
 }
